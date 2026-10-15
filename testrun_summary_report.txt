@@ -1,0 +1,72 @@
+DBT TEST RUN SUMMARY REPORT
+===================================
+
+Project            : dbt_course
+Target profile     : dev
+Database           : postgre_demo
+dbt version        : 1.12.5
+Run date/time      : <fill in based on when you ran dbt test>
+----------------------------------------------------------------
+1. OVERALL SUMMARY
+----------------------------------------------------------------
+Total tests run     : <e.g. 10>
+Passed              : <e.g. 10>
+Failed              : <e.g. 0>
+Errors              : <e.g. 0>
+Warnings            : <e.g. 0>
+Skipped             : <e.g. 0>
+
+Summary line from dbt output:
+<copy the final summary line from testrun_log.txt here>
+
+Example:
+Completed with 0 failures, 0 warnings, and 10 successes
+
+
+----------------------------------------------------------------
+2. KEY MODELS COVERED
+----------------------------------------------------------------
+
+-fact_orders
+ * Business description: Incremental fact table of orders built from raw_order
+ * Tests applied
+     - not_null on order_id
+     - unique on order_id
+     - not_null on order_date
+     - not_null on customer_id
+     - relationship: customer_id -> dim_customers.customer_id
+     - not_null on order_amount
+     - no_invalid_order_amounts on order_amount
+
+- dim_customers
+  * Business description : Slowly changing dimension (SCD) snapshot of customers
+  * Tests applied
+      - not_null + unique on dbt_scd_id
+      - not_null on customer_id
+      - not_null on customer_name
+      - not_null on city
+
+
+----------------------------------------------------------------
+3. FAILED TESTS (IF ANY)
+----------------------------------------------------------------
+
+<If no failures:>
+
+- None. All tests passed.
+
+<If there were failures, list them like this:>
+
+- Test name       : no_invalid_order_amounts_fact_orders_order_amount
+  Status          : FAIL
+  Model           : fact_orders
+  Column          : order_amount
+  Description     : Found negative order_amount values in fact_orders
+  Suggest fix     : Investigate source rows for incorrect or negative values
+
+----------------------------------------------------------------
+4. NOTES / NEXT ACTIONS
+----------------------------------------------------------------
+
+- <Add any observations, e.g. "Next step: add tests for new models", "Investigate failed tests", "Schedule dbt test to run nightly".
+

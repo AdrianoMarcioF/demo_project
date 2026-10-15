@@ -1,0 +1,34 @@
+version: 2
+
+snapshots:
+  - name: dim_customers
+    description: "Slowly changing dimension (SCD) snapshot of customers."
+    meta:
+      owner: "CRM Data Team"
+      owner_email: "crm-team@example.com"
+      domain: "customers"
+
+    columns:
+      - name: dbt_scd_id
+        description: "Internal dbt identifier for each version of a customer row."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_id
+        description: "Business key for the customer"
+        tests:
+          - not_null
+
+      - name: customer_name
+        description: "Current or hitorical name of the customer."
+        tests:
+          - not_null
+
+      - name: city
+        description: "City associated with the customer at that point."
+        tests:
+          - not_null
+
+      - name: updat_at
+        description: "Timestamp used by the snapshot to detect changes."

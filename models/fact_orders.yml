@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: fact_orders
+    description: "Incremental fact table of orders built from raw_order."
+    meta:
+      owner: "Data Analytics Team"
+      owner_email: "dat-team@example.com"
+      domain: "sales"
+ 
+    columns:
+      - name: order_id
+        description: "Unique identifier for the order."
+        tests:
+          - not_null
+          - unique
+
+      - name: order_date
+        description: "Calendar date when the order was placed."
+        tests:
+          - not_null
+
+      - name: customer_id
+        description: "Identifier for the customer who placed the order."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+      
+      - name: order_amount
+        description: "Monetary value of the order."
+        tests:
+          - not_null
+          - no_invalid_order_amounts
