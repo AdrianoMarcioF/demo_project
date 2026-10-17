@@ -64,7 +64,7 @@ jobs:
       - name: initialize test data
         env:
           PGPASSWORD: dbt_password
-        run: psql -h localhost -p 5432 -U dbt -d dbt_course -v ON_ERROR_STOP=1 -f ci/init.sql
+        run: psql -h localhost -p 5432 -U dbt -d dbt_course -v ON_ERROR_STOP=1 -f CI/init.sql
 
       - name: Check dbt configuration
         run: dbt debug
