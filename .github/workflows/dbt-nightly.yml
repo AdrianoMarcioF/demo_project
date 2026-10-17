@@ -1,0 +1,58 @@
+name: dbt Nightly
+
+on:
+  # Run every night at 00:00 UTC
+  schedule:
+    - cron: '0 0 * * *'
+
+  # Allow manual runs from th GitHub UI (useful for demos)
+  workflow_dispatch:
+
+jobs:
+  nightly-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dbt (Postgres)
+        run: pip install dbt-core==1.12.5 dbt-postgres==1.11.0
+
+      - name: Configure dbt profile
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.dbt"
+          cat > "$HOME/.dbt/profiles.yml" <<'EOF'
+          dbt_course:
+            target: dev
+            outputs:
+              dev:
+                type: postgres
+                host: localhost
+                user: dbt
+                password: dbt_password
+                port: 5432
+                dbname: dbt_course
+                schema: demo_project
+                threads: 4
+          EOF
+
+      - name: Run dbt compile
+        run: dbt compile --profiles-dir "$HOME/.dbt"
+
+      # Upload artifacts so we can inspect from Actions
+      - name: Upload dbt nightly artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-nightly-artifacts
+          path: |
+            target/manifest.json
+            logs/
+          if-no-files-found: warn  

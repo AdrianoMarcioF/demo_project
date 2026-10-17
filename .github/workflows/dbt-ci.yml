@@ -1,0 +1,83 @@
+name: dbt CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  dbt-build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dbt
+          POSTGRES_PASSWORD: dbt_password
+          POSTGRES_DB: dbt_course
+        ports:
+          - 5432:5432
+        volumes:
+          - ${{ github.workspace }}/ci:/docker-entrypoint-initdb.d:ro
+        options: >-
+          --health-cmd "pg_isready -U dbt -d dbt_course"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+         python-version: '3.11'
+
+      - name: Install dbt (Postgres adapter)
+        run: pip install dbt-core==1.12.5 dbt-postgres==1.11.0
+
+      - name: Configure dbt profile
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.dbt"
+          
+          cat > "$HOME/.dbt/profiles.yml" <<'EOF'
+          dbt_course:
+            target: dev
+            outputs:
+              dev:
+                type: postgres
+                host: localhost
+                user: dbt
+                password: dbt_password
+                port: 5432
+                dbname: dbt_course
+                schema: demo_project
+                threads: 4
+          EOF
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: initialize test data
+        env:
+          PGPASSWORD: dbt_password
+        run: psql -h localhost -p 5432 -U dbt -d dbt_course -v ON_ERROR_STOP=1 -f CI/init.sql
+
+      - name: Check dbt configuration
+        run: dbt debug
+
+      - name: Run dbt build
+        run: dbt build
+
+      - name: Upload dbt artifacts
+        if: always()
+        uses: actions/upload-artifact@v4  
+        with:
+          name: dbt-artifacts
+          path: |
+            logs/
+            target/
+          if-no-files-found: warn
