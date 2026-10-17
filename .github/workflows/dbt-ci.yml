@@ -51,7 +51,8 @@ jobs:
                 user: dbt
                 password: dbt_password
                 port: 5432
-                dbname: demo_project
+                dbname: dbt_course
+                schema: demo_project
                 threads: 4
           EOF
          
