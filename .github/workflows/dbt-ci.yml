@@ -18,6 +18,8 @@ jobs:
           POSTGRES_DB: dbt_course
         ports:
           - 5432:5432
+        volumes:
+          - ${{ github.workspace }}/ci:/docker-entrypoint-initdb.d:ro
         options: >-
           --health-cmd "pg_isready -U dbt -d dbt_course"
           --health-interval 10s
