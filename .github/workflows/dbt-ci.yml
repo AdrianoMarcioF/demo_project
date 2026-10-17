@@ -9,8 +9,23 @@ jobs:
   dbt-build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dbt
+          POSTGRES_PASSWORD: dbt_password
+          POSTGRES_DB: dbt_course
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dbt -d dbt_course"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -19,21 +34,39 @@ jobs:
          python-version: '3.11'
 
       - name: Install dbt (Postgres adapter)
+        run: pip install dbt-core==1.12.5 dbt-postgres==1.11.0
+
+      - name: Configure dbt profile
+        shell: bash
         run: |
-          pip install dbt-postgres
+          mkdir -p "$HOME/.dbt"
+          
+          cat > "$HOME/.dbt/profiles.yml" <<'EOF'
+          dbt_course:
+            target: dev
+            outputs:
+              dev:
+                type: postgres
+                host: localhost
+                user: dbt
+                password: dbt_password
+                port: 5432
+                dbname: demo_project
+                threads: 4
+          EOF
+         
+      - name: Check dbt configuration
+        run: dbt debug
 
       - name: Run dbt build
-        run: |
-          dbt --version
-          dbt debug || true
-          dbt build
-        working-directory:
+        run: dbt build
 
-      - name: Upload dbt artifacts (logs + target)
+      - name: Upload dbt artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4  
         with:
           name: dbt-artifacts
           path: |
             logs/
             target/
+          if-no-files-found: warn
