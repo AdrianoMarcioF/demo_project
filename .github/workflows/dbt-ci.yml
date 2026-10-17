@@ -57,7 +57,15 @@ jobs:
                 schema: demo_project
                 threads: 4
           EOF
-         
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: initialize test data
+        env:
+          PGPASSWORD: dbt_password
+        run: psql -h localhost -p 5432 -U dbt -d dbt_course -v ON_ERROR_STOP=1 -f ci/init.sql
+
       - name: Check dbt configuration
         run: dbt debug
 
